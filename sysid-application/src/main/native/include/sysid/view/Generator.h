@@ -14,7 +14,7 @@
 #include <glass/View.h>
 #include <imgui.h>
 #include <portable-file-dialogs.h>
-#include <wpi/EventLoopRunner.h>
+#include <wpinet/EventLoopRunner.h>
 #include <wpi/Logger.h>
 #include <wpi/mutex.h>
 
@@ -219,7 +219,7 @@ class Generator : public glass::View {
 
   // Create an event loop runner (runs a libuv event loop in a separate thread)
   // for the deploy process.
-  wpi::EventLoopRunner m_deployRunner;
+  wpinet::EventLoopRunner m_deployRunner;
 
   // Represents the currently running or most recent deploy session.
   std::unique_ptr<DeploySession> m_deploySession;
