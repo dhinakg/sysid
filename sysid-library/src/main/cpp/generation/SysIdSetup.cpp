@@ -6,23 +6,17 @@
 
 #include <stdexcept>
 
-#include <CANVenom.h>
 #include <fmt/core.h>
 #include <frc/ADXRS450_Gyro.h>
 #include <frc/AnalogGyro.h>
 #include <frc/Filesystem.h>
 #include <frc/TimedRobot.h>
 #include <frc/motorcontrol/Spark.h>
-#include <frc/romi/RomiGyro.h>
 #include <units/angle.h>
 #include <units/angular_velocity.h>
 #include <wpi/SmallString.h>
 #include <wpi/StringExtras.h>
 #include <wpi/fs.h>
-
-#ifdef __FRC_ROBORIO__
-#include "AHRS.h"
-#endif
 
 // Based on https://gcc.gnu.org/onlinedocs/cpp/Stringizing.html
 #define EXPAND_STRINGIZE(s) STRINGIZE(s)
@@ -93,13 +87,6 @@ void AddMotorController(
     sparkMax->SetInverted(inverted);
     sparkMax->SetIdleMode(rev::CANSparkMax::IdleMode::kBrake);
   } else if (controller == "Venom") {
-    fmt::print("Setup Venom\n");
-    controllers->emplace_back(std::make_unique<frc::CANVenom>(port));
-
-    auto* venom = static_cast<frc::CANVenom*>(controllers->back().get());
-
-    venom->SetInverted(inverted);
-    venom->SetBrakeCoastMode(frc::CANVenom::BrakeCoastMode::kBrake);
   } else {
     fmt::print("Setup PWM\n");
     controllers->emplace_back(std::make_unique<frc::Spark>(port));
@@ -182,13 +169,6 @@ void SetupEncoders(
       SetupCTREEncoder(controller, feedbackDevice, period, combinedCPR,
                        numSamples, encoderInverted, position, rate);
     } else {  // Venom
-      fmt::print("Setup Built-in+Venom\n");
-      auto* venom = static_cast<frc::CANVenom*>(controller);
-      position = [=] { return venom->GetPosition() / gearing; };
-      rate = [=] {
-        return venom->GetSpeed() / gearing /
-               60;  // Conversion from RPM to rotations per second
-      };
     }
   } else if (encoderType == "Encoder Port") {
     auto* sparkMax = static_cast<rev::CANSparkMax*>(controller);
@@ -402,34 +382,6 @@ void SetupGyro(
       fmt::print("Setup ADXRS450\n");
       gyro = std::make_unique<frc::ADXRS450_Gyro>(port);
 
-    } else if (gyroType == "NavX") {
-      if (gyroCtor == "SerialPort (USB)") {
-        fmt::print("Setup NavX, SerialPort (USB)\n");
-#ifdef __FRC_ROBORIO__
-        gyro = std::make_unique<AHRS>(frc::SerialPort::Port::kUSB);
-#endif
-      } else if (gyroCtor == "I2C (MXP)") {
-        fmt::print("Setup NavX, I2C (MXP)\n");
-#ifdef __FRC_ROBORIO__
-        gyro = std::make_unique<AHRS>(frc::I2C::Port::kMXP);
-#endif
-      } else if (gyroCtor == "SerialPort (MXP)") {
-        fmt::print("Setup NavX, SerialPort (MXP)\n");
-#ifdef __FRC_ROBORIO__
-        gyro = std::make_unique<AHRS>(frc::SerialPort::Port::kMXP);
-#endif
-      } else {
-        fmt::print("Setup NavX, SPI (MXP)\n");
-#ifdef __FRC_ROBORIO__
-        gyro = std::make_unique<AHRS>(frc::SPI::Port::kMXP);
-#endif
-      }
-      //     // FIXME: Update Romi Gyro once vendordep is out
-    } else if (gyroType == "Romi") {
-      fmt::print("Setup Romi\n");
-#ifndef __FRC_ROBORIO__
-      gyro = std::make_unique<frc::RomiGyro>();
-#endif
     } else if (gyroType == "Analog Gyro") {
       try {
         fmt::print("Setup Analog Gyro, {}\n", gyroCtor);
