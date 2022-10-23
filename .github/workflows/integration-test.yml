@@ -2,13 +2,17 @@ name: Integration Test
 
 on: [push, pull_request]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: windows-latest
+          - os: windows-2019
             artifact-name: Windows x86-64
             architecture: x64
             test-type: Analysis
@@ -20,7 +24,7 @@ jobs:
             artifact-name: Linux x86-64
             architecture: x64
             test-type: Analysis
-          - os: windows-latest
+          - os: windows-2019
             artifact-name: Windows x86-64
             architecture: x64
             test-type: Generation
